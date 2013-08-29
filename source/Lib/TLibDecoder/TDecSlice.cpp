@@ -107,6 +107,8 @@ Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
 
 Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders)
 {
+  m_listLastCU.clear();
+  m_listLastCU.clear();
   TComDataCU* pcCU;
   UInt        uiIsLast = 0;
   Int   iStartCUEncOrder = max(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()/rpcPic->getNumPartInCU(), rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()/rpcPic->getNumPartInCU());
@@ -216,8 +218,10 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
       CTXMem[0]->loadContexts(pcSbacDecoder);
     }
   }
+  //核心循环各个LCU，并且准备递归展开
   for( Int iCUAddr = iStartCUAddr; !uiIsLast && iCUAddr < rpcPic->getNumCUsInFrame(); iCUAddr = rpcPic->getPicSym()->xCalculateNxtCUAddr(iCUAddr) )
   {
+
     pcCU = rpcPic->getCU( iCUAddr );
     pcCU->initCU( rpcPic, iCUAddr );
     uiTileCol = rpcPic->getPicSym()->getTileIdxMap(iCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1); // what column of tiles are we in?
@@ -226,6 +230,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
     uiCol     = iCUAddr % uiWidthInLCUs;
     // The 'line' is now relative to the 1st line in the slice, not the 1st line in the picture.
     uiLin     = (iCUAddr/uiWidthInLCUs)-(iStartCUAddr/uiWidthInLCUs);
+
     // inherit from TR if necessary, select substream to use.
     if( (pcSlice->getPPS()->getNumSubstreams() > 1) || ( depSliceSegmentsEnabled  && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()) ))
     {
@@ -305,6 +310,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
       
     }
 
+
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
@@ -359,7 +365,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
         }
       }
     }
-    m_pcCuDecoder->decodeCU     ( pcCU, uiIsLast );
+    m_pcCuDecoder->decodeCU     ( pcCU, uiIsLast, m_listLastCU  );
     m_pcCuDecoder->decompressCU ( pcCU );
     
 #if ENC_DEC_TRACE
@@ -380,6 +386,41 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
        }
       CTXMem[0]->loadContexts( pcSbacDecoder );//ctx end of dep.slice
       return;
+    }
+		UInt xpel = pcCU->getCUPelX();
+    UInt ypel = pcCU->getCUPelY();
+    UInt width = pcCU->getWidth(0);
+    UInt height = pcCU->getHeight(0);
+    PtPair pt;
+    pt._pt1x = xpel; pt._pt1y = ypel; pt._pt2x = xpel + width; pt._pt2y = ypel + height;
+    m_listLCU.push_back(pt);
+  }
+  Pel* pY = rpcPic->getPicYuvRec()->getLumaAddr();
+  UInt stride = rpcPic->getPicYuvRec()->getStride();
+  for(UInt index = 0; index < m_listLastCU.size(); index++)
+  {
+    for(UInt y = m_listLastCU[index]._pt1y; y <= m_listLastCU[index]._pt2y; y++)
+    {
+      for(UInt x = m_listLastCU[index]._pt1x; x <= m_listLastCU[index]._pt2x; x++)
+      {
+        if(y == m_listLastCU[index]._pt1y /*|| y == m_listSCU[index]._pt2y*/)
+          pY[y*stride + x] = 0;
+        if(x == m_listLastCU[index]._pt1x /*|| x == m_listSCU[index]._pt2x*/)
+          pY[y*stride + x] = 0;
+      }
+    }
+  }
+  for(UInt index = 0; index < m_listLCU.size(); index++)
+  {
+    for(UInt y = m_listLCU[index]._pt1y; y <= m_listLCU[index]._pt2y; y++)
+    {
+      for(UInt x = m_listLCU[index]._pt1x; x <= m_listLCU[index]._pt2x; x++)
+      {
+        if(y == m_listLCU[index]._pt1y /*|| y == m_listLCU[index]._pt2y*/)
+          pY[y*stride + x] = 255;
+        if(x == m_listLCU[index]._pt1x || x == m_listLCU[index]._pt2x)
+          pY[y*stride + x] = 255;
+      }
     }
   }
 }

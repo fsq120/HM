@@ -71,7 +71,8 @@ private:
   TDecSbac*       m_pcBufferLowLatSbacDecoders;   ///< dependent tiles: line to store temporary contexts, one per column of tiles.
   TDecBinCABAC*   m_pcBufferLowLatBinCABACs;
   std::vector<TDecSbac*> CTXMem;
-  
+  std::vector<PtPair>  m_listLastCU;
+  std::vector<PtPair>m_listLCU;  //用来保存一个slice里面所有的最终CU的划分结果
 public:
   TDecSlice();
   virtual ~TDecSlice();

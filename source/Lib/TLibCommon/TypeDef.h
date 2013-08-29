@@ -326,6 +326,14 @@ struct SAOParam
   ~SAOParam();
 };
 
+struct PtPair   //保存一组坐标
+{
+  UInt _pt1x;
+  UInt _pt1y;
+  UInt _pt2x;
+  UInt _pt2y;
+};
+
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {

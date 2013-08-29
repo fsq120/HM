@@ -68,6 +68,7 @@ private:
   TDecEntropy*        m_pcEntropyDecoder;
 
   Bool                m_bDecodeDQP;
+  vector<PtPair>* m_plistPt;
   
 public:
   TDecCu();
@@ -83,7 +84,7 @@ public:
   Void  destroy                 ();
   
   /// decode CU information
-  Void  decodeCU                ( TComDataCU* pcCU, UInt& ruiIsLast );
+  Void  decodeCU                ( TComDataCU* pcCU, UInt& ruiIsLast,std::vector<PtPair>& list );
   
   /// reconstruct CU information
   Void  decompressCU            ( TComDataCU* pcCU );
@@ -114,6 +115,7 @@ protected:
   Bool getdQPFlag               ()                        { return m_bDecodeDQP;        }
   Void setdQPFlag               ( Bool b )                { m_bDecodeDQP = b;           }
   Void xFillPCMBuffer           (TComDataCU* pCU, UInt depth);
+
 };
 
 //! \}

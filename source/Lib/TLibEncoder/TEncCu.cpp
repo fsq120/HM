@@ -42,8 +42,11 @@
 
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 using namespace std;
 
+
+ofstream fout("encodeinfo.txt");
 //! \ingroup TLibEncoder
 //! \{
 
@@ -1127,9 +1130,11 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
         xEncodeCU( pcCU, uiAbsPartIdx, uiDepth+1 );
       }
     }
+    fout<<"minCU uiLPelX uiTPelY uiRPelX uiBPelY "<<uiLPelX<<" "<<uiTPelY<<" "<<uiRPelX<<" "<<uiBPelY<<" "<<pcCU->getTotalCost()<<std::endl;
     return;
   }
   
+  fout<<"uiLPelX uiTPelY uiRPelX uiBPelY "<<uiLPelX<<" "<<uiTPelY<<" "<<uiRPelX<<" "<<uiBPelY<<" "<<pcCU->getTotalCost()<<std::endl;
   if( (g_uiMaxCUWidth>>uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
   {
     setdQPFlag(true);

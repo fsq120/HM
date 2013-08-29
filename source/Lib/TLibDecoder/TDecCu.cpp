@@ -36,7 +36,9 @@
 */
 
 #include "TDecCu.h"
+#include <fstream>
 
+ofstream fout("decodeinfo.txt");
 //! \ingroup TLibDecoder
 //! \{
 
@@ -119,13 +121,18 @@ Void TDecCu::destroy()
 /** \param    pcCU        pointer of CU data
  \param    ruiIsLast   last data?
  */
-Void TDecCu::decodeCU( TComDataCU* pcCU, UInt& ruiIsLast )
+Void TDecCu::decodeCU( TComDataCU* pcCU, UInt& ruiIsLast,std::vector<PtPair>& list )
 {
+  m_plistPt = &list;
   if ( pcCU->getSlice()->getPPS()->getUseDQP() )
   {
     setdQPFlag(true);
   }
-
+                              
+//#if !REMOVE_BURST_IPCM
+ // pcCU->setNumSucIPCM(0);
+//#endif
+                              
   // start from the top level CU
   xDecodeCU( pcCU, 0, 0, ruiIsLast);
 }
@@ -243,6 +250,11 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt&
       }
       
       uiIdx += uiQNumParts;
+	  struct PtPair pt;
+	  pt._pt1x = uiLPelX; pt._pt1y = uiTPelY; pt._pt2x = uiRPelX; pt._pt2y = uiBPelY;
+	  fout<<"uiLPelX uiTPelY uiRPelX uiBPelY "<<uiLPelX<<" "<<uiTPelY<<" "<<uiRPelX<<" "<<uiBPelY<<" "<<pcCU->getTotalCost()<<std::endl;
+      m_plistPt->push_back(pt);
+
     }
     if( (g_uiMaxCUWidth>>uiDepth) == pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
     {

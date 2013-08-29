@@ -438,6 +438,8 @@ Void TAppEncTop::encode()
 
   m_cTEncTop.printSummary();
 
+  display();
+
   // delete original YUV buffer
   pcPicYuvOrg->destroy();
   delete pcPicYuvOrg;
@@ -491,16 +493,18 @@ void TAppEncTop::display(){
 	fout<<"\n---------------TU ends--------------\n";*/
 	TComList<TComPic*>* tmp=m_cTEncTop.getListPic();
 	TComList<TComPic*>::iterator itor=tmp->begin();
-	TComPic* tmpPic;
-	for (itor=tmp->begin();itor!=tmp->end();itor++){
+	TComPic* tmpPic=NULL;
+	//for (itor=tmp->begin();itor++;itor!=tmp->end()){
 		tmpPic=*itor;
-		for (unsigned int i=0;i<=tmpPic->getNumCUsInFrame();i++){
+		cout<<(*itor)->getNumCUsInFrame()<<endl;
+		puts("FUCK");
+		for (unsigned int i=0;i<tmpPic->getNumCUsInFrame();i++){
 			TComDataCU* cu=tmpPic->getCU(i);
 			if (cu!=NULL){
-				fout<<i<<" "<<cu->getTotalCost()<<cu->getDepth()<<endl;
+				fout<<i<<" "<<cu->getTotalCost()<<endl;
 			}
 		}
-	}
+	//}
 	fout.close();
 }
 
